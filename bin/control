@@ -1,0 +1,181 @@
+#!/bin/sh
+
+readonly G_PROJECT="torrent-provider"
+readonly G_SUPERVICE_NAME="supervise.torrent-provider"
+readonly MAIN_CLASS="com.gko3.torrentprovider.server.TorrentProviderMain"
+
+DATE=`date +%Y%m%d-%H%M`
+
+WORK_DIR=`dirname $0`
+WORK_DIR=`cd ${WORK_DIR}; cd ..; pwd`
+echo "Work dir:"${WORK_DIR}
+
+help() {
+    echo "${0} <start|stop|restart|shutdown|status|help>"
+}
+
+die() {
+    echo "[FAILED] ${1}"
+    exit 1
+}
+
+ok() {
+    echo "[OK] ${1}"
+}
+
+check_supervise() {
+    ps -fj ax | fgrep "${G_SUPERVICE_NAME}"| fgrep -v 'fgrep' | fgrep -v "vi\|vim\|tail\|tailf\|less\|more" >/dev/null 2>&1
+    ret=$?
+    if [ $ret -eq 0 ]; then
+        return 0
+    fi
+    return 1
+}
+
+check_server() {
+    ps -fj ax | fgrep "${MAIN_CLASS}"| fgrep -v 'fgrep' | fgrep -v "vi\|vim\|tail\|tailf\|less\|more" | fgrep 'java' >/dev/null 2>&1
+    ret=$?
+    if [ $ret -eq 0 ]; then
+        return 0
+    fi
+    return 1
+}
+
+checkPort()
+{
+    for i in {1..60}
+    do
+        echo "quit" |/usr/bin/nc localhost 9099 2>/dev/null
+        result=$(echo $?)
+
+        if [ $result -eq 0 ];then
+            return 0
+        else
+            sleep 10
+            if [ $i -eq 60 ];then
+                echo "Fatal port open failed!"
+                exit 1
+            fi
+        fi
+    done
+}
+
+start() {
+    check_supervise
+    if [ $? -eq 0 ]; then
+        ok "start"
+        return 0
+    fi
+
+    install
+
+    (setsid ${WORK_DIR}/bin/${G_SUPERVICE_NAME} --run >/dev/null 2>&1 &)
+    for i in 1 2 3 4 5; do
+        sleep 1
+        check_supervise
+        if [ $? -eq 0 ]; then
+            ok "start"
+            return 0
+        fi
+    done
+
+    checkPort
+
+    die "start"
+}
+
+stop_server() {
+    echo ${DATE} "stop " ${G_PROJECT} " server"
+    SERVER_PIDS=`ps aux | grep ${MAIN_CLASS} | grep -v "grep"| awk '{print $2}'`
+    for id in $SERVER_PIDS;do
+       kill -TERM ${id}
+       echo "kill process,pid:${id}"
+    done
+
+    for i in 1 2 3 4 5; do
+        sleep 1
+        check_server
+        if [ $? -eq 1 ]; then
+            ok "stop server"
+            return 0
+        fi
+    done
+
+    die "stop server"
+}
+
+stop() {
+    stop_server
+
+    check_supervise
+    if [ $? -eq 1 ]; then
+        ok "stop"
+        return 0
+    fi
+
+    echo ${DATE} "stop " ${G_PROJECT}
+    SERVER_PIDS=`ps aux | grep ${G_SUPERVICE_NAME} | grep -v "grep"| awk '{print $2}'`
+    for id in $SERVER_PIDS;do
+       kill -9 ${id}
+       echo "kill process,pid:${id}"
+    done
+
+    for i in 1 2 3 4 5; do
+        sleep 1
+        check_supervise
+        if [ $? -eq 1 ]; then
+            ok "stop"
+            return 0
+        fi
+    done
+
+    die "stop"
+}
+
+install () {
+    mkdir -p ${WORK_DIR}/data
+}
+
+restart() {
+    stop
+    start
+    return 0
+}
+
+shutdown() {
+    stop
+    ok "shutdown"
+    return 0
+}
+
+status() {
+    check_supervise
+    if [ $? -eq 0 ]; then
+        echo "Running"
+        return 0
+    else
+        echo "Not Running"
+        return 1
+    fi
+}
+
+case "${1}" in
+start)
+    start
+    ;;
+stop)
+    stop
+    ;;
+restart)
+    restart
+    ;;
+shutdown)
+    shutdown
+    ;;
+status)
+    status
+    ;;
+*)
+    help
+    ;;
+esac

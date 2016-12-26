@@ -1,0 +1,79 @@
+#!/bin/sh
+
+readonly G_PROJECT_NAME=torrent-provider
+readonly G_START_CYCLE=10
+
+DATE=`date +%Y%m%d-%H%M`
+
+WORK_DIR=`dirname $0`
+WORK_DIR=`cd ${WORK_DIR}; cd ..; pwd`
+echo "Work dir:"${WORK_DIR}
+cd $WORK_DIR
+
+LOGS_DIR=${WORK_DIR}/log
+
+echo "Setting up environment variable..."
+JAVA_HOME=${WORK_DIR}/java6
+LIB_DIR=${WORK_DIR}/lib
+CONF_DIR=${WORK_DIR}/conf
+
+unset _JAVA_OPTIONS
+
+if [ ! -d ${LOGS_DIR} ];then
+    mkdir -p ${LOGS_DIR}
+fi
+
+MAIN_CLASS="com.gko3.torrentprovider.server.TorrentProviderMain"
+echo "Main class:"${MAIN_CLASS}
+
+check() {
+    ps -fj ax | fgrep "${MAIN_CLASS}"| fgrep -v 'fgrep' | fgrep -v "vi\|vim\|tail\|tailf\|less\|more" | fgrep 'java' >/dev/null 2>&1
+    ret=$?
+    if [ $ret -eq 0 ]; then
+        return 0
+    fi
+    return 1
+}
+
+start() {
+    check
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+
+    echo ${DATE} "start " ${G_PROJECT_NAME}
+    CLASSPATH=.:${CONF_DIR}:${LIB_DIR}/*
+    JAVA_ARGS=" -server -XX:SurvivorRatio=8 -XX:PermSize=512m -XX:MaxPermSize=512m -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+CMSClassUnloadingEnabled -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=80 -XX:+UseCMSCompactAtFullCollection -XX:CMSFullGCsBeforeCompaction=0 -XX:-CMSParallelRemarkEnabled -XX:SoftRefLRUPolicyMSPerMB=0 -XX:MaxTenuringThreshold=7 -Xloggc:${LOGS_DIR}/${G_PROJECT_NAME}-gc.log -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+PrintHeapAtGC -cp ${CLASSPATH}"
+
+    if [ -f ${LOGS_DIR}/gc.log ];then
+        mv ${LOGS_DIR}/gc.log ${LOGS_DIR}/gc.log.${DATE}
+    fi
+    
+    nohup ${JAVA_HOME}/bin/java ${JAVA_ARGS} ${MAIN_CLASS} >/dev/null 2>&1 &
+    pid=$!
+    echo "$pid" > ${G_PROJECT_NAME}.pid
+    
+    for i in 1 2 3 4 5; do
+        sleep 1
+        check
+        if [ $? -eq 0 ]; then
+            return 0
+        fi
+    done
+}
+
+run() {
+    while true; do
+        start
+        sleep ${G_START_CYCLE}
+    done
+}
+
+if [ $# -eq 1 ]; then
+    if [ x"${1}" = x"--run" ]; then
+        run
+    fi
+fi
+
+exec setsid "${0}" --run </dev/null >/dev/null 2>&1
+exit 1
