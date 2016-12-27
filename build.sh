@@ -15,8 +15,6 @@ WORK_DIR=$(cd $(dirname $0); pwd)
 Prompt "Work dir: $WORK_DIR"
 cd $WORK_DIR
 
-JAVA_BASE_PATH=/opt/usr/local
-
 Prompt "Generate thrift java files ..."
 chmod +x ${WORK_DIR}/src/main/java/protocol/thrift
 sh ${WORK_DIR}/src/main/java/protocol/generateProtocol.sh
@@ -24,8 +22,8 @@ sh ${WORK_DIR}/src/main/java/protocol/generateProtocol.sh
 Prompt "Setting up environment variables ..."
 mkdir -p opbin
 
-export JAVA_HOME=$JAVA_BASE_PATH/jdk1.6.0_45/
-export PATH=$JAVA_BASE_PATH/apache-maven-3.2.5/bin:$JAVA_HOME/bin:$PATH
+export JAVA_HOME=/usr/lib/jvm/java/
+export PATH=/usr/local/apache-maven-3.2.5/bin:$JAVA_HOME/bin:$PATH
 
 rm -rf $WORK_DIR/target/*
 rm -rf $WORK_DIR/output

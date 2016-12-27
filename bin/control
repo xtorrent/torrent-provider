@@ -24,7 +24,7 @@ ok() {
 }
 
 check_supervise() {
-    ps -fj ax | fgrep "${G_SUPERVICE_NAME}"| fgrep -v 'fgrep' | fgrep -v "vi\|vim\|tail\|tailf\|less\|more" >/dev/null 2>&1
+    ps -fj ax | fgrep "${G_SUPERVICE_NAME}"| fgrep -v "grep" | fgrep -v "vi\|vim\|tail\|tailf\|less\|more" >/dev/null 2>&1
     ret=$?
     if [ $ret -eq 0 ]; then
         return 0
@@ -33,7 +33,7 @@ check_supervise() {
 }
 
 check_server() {
-    ps -fj ax | fgrep "${MAIN_CLASS}"| fgrep -v 'fgrep' | fgrep -v "vi\|vim\|tail\|tailf\|less\|more" | fgrep 'java' >/dev/null 2>&1
+    ps -fj ax | fgrep "${MAIN_CLASS}"| fgrep -v 'grep' | fgrep -v "vi\|vim\|tail\|tailf\|less\|more" | fgrep 'java' >/dev/null 2>&1
     ret=$?
     if [ $ret -eq 0 ]; then
         return 0

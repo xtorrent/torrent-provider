@@ -27,7 +27,7 @@ fi
 MAIN_CLASS="com.gko3.torrentprovider.client.ServerPerformanceTest"
 echo "Main class:"${MAIN_CLASS}
 
-CLASSPATH=.:${JAVA_HOME}/lib/dt.jar:${JAVA_HOME}/lib.tools.jar:${CONF_DIR}:${LIB_DIR}/*
+CLASSPATH=.:${CONF_DIR}:${LIB_DIR}/*
 JAVA_ARGS="-server -XX:SurvivorRatio=8 -XX:PermSize=512m -XX:MaxPermSize=512m -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+CMSClassUnloadingEnabled -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=80 -XX:+UseCMSCompactAtFullCollection -XX:CMSFullGCsBeforeCompaction=0 -XX:-CMSParallelRemarkEnabled -XX:SoftRefLRUPolicyMSPerMB=0 -XX:MaxTenuringThreshold=7 -Xloggc:${LOGS_DIR}/${PROJECT}-gc.log -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+PrintHeapAtGC -cp ${CLASSPATH}"
 
 if [ -f ${LOGS_DIR}/gc.log ];then
