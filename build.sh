@@ -46,7 +46,6 @@ chmod +x $WORK_DIR/output/opbin/*
 
 TARGET_OUTPUT=$WORK_DIR/target/torrentProvider-all/output/
 cp -r $TARGET_OUTPUT/* $WORK_DIR/output
-cp -r $WORK_DIR/lib/org/fusesource/leveldbjni/leveldbjni-all/1.7.1/leveldbjni-all-1.7.1.jar $WORK_DIR/output/lib/
 
 Prompt "Generate verion and timestamp ..."
 echo $(date -d  today +%Y%m%d%H%M%S) > $WORK_DIR/output/version
