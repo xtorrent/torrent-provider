@@ -13,7 +13,7 @@ cd $WORK_DIR
 LOGS_DIR=${WORK_DIR}/log
 
 echo "Setting up environment variable..."
-JAVA_HOME=${WORK_DIR}/java6
+JAVA_HOME=${JAVA_HOME}
 LIB_DIR=${WORK_DIR}/lib
 CONF_DIR=${WORK_DIR}/conf
 

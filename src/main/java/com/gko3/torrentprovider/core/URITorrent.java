@@ -63,9 +63,12 @@ public class URITorrent {
     }
 
     public void setUri(String uri) {
+        LOG.debug("call setUri with " + uri);
         if (uri.startsWith("hdfs://")) {
+            LOG.debug("new HdfsTorrentProcessor");
             processor = new HdfsTorrentProcessor();
         } else if (uri.startsWith("gko3://")) {
+            LOG.debug("new GKOTorrentProcessor");
             processor = new GKOTorrentProcessor();
         } else {
             LOG.error("unknown protocol for uri:" + uri);
@@ -120,6 +123,7 @@ public class URITorrent {
      * @return  HdfsStatus
      */
     public GeneralStatus generateTorrentCode(String uri) {
+        LOG.debug("start generate torrent code with uri=" + uri);
         if (processor == null) {
             setMessage("processor is null when generate torrentCode!");
             return GeneralStatus.STATUS_INVALID_PARAM;
@@ -161,6 +165,7 @@ public class URITorrent {
     }
 
     public GeneralStatus generateTorrentCode() {
+        LOG.debug("call generateTorrentCode()");
         return this.generateTorrentCode(this.uri);
     }
 

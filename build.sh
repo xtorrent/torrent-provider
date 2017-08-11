@@ -22,35 +22,44 @@ sh ${WORK_DIR}/src/main/java/protocol/generateProtocol.sh
 Prompt "Setting up environment variables ..."
 mkdir -p opbin
 
-export JAVA_HOME=/usr/lib/jvm/java/
+pushd /tmp/
+# install java 8u144
+if [ ! -e /tmp/java ]
+then
+    curl -L -C - -b "oraclelicense=accept-securebackup-cookie" -O http://download.oracle.com/otn-pub/java/jdk/8u144-b01/090f390dda5b47b9b721c7dfaa008135/jdk-8u144-linux-x64.tar.gz
+    tar xzf jdk-8u144-linux-x64.tar.gz
+    ln -sf jdk1.8.0_144 java
+fi
+popd
+
+export JAVA_HOME=/tmp/java
 export PATH=/usr/local/apache-maven-3.2.5/bin:$JAVA_HOME/bin:$PATH
 
 rm -rf $WORK_DIR/target/*
-rm -rf $WORK_DIR/output
-mkdir -p $WORK_DIR/output/lib
+rm -rf $WORK_DIR/gko3-provider
+mkdir -p $WORK_DIR/gko3-provider/lib
 
 Prompt "Clean and Package"
-mvn clean package -e -Dmaven.test.skip=true || exit $?
-#mvn clean package || exit $?
+mvn clean assembly:assembly -e -Dmaven.test.skip=true || exit $?
 
 Prompt "Copy files ..."
-mkdir -p $WORK_DIR/output/opbin
-mkdir -p $WORK_DIR/output/log
-mkdir -p $WORK_DIR/output/data
-cp -r $JAVA_HOME/jre $WORK_DIR/output/java6
-cp -r $WORK_DIR/bin $WORK_DIR/output
-cp $WORK_DIR/output/bin/clientTest.sh $WORK_DIR/output/opbin/service_monitor.sh
+mkdir -p $WORK_DIR/gko3-provider/opbin
+mkdir -p $WORK_DIR/gko3-provider/log
+mkdir -p $WORK_DIR/gko3-provider/data
+mkdir -p $WORK_DIR/gko3-provider/leveldb
+cp -r $WORK_DIR/bin $WORK_DIR/gko3-provider
+cp $WORK_DIR/gko3-provider/bin/clientTest.sh $WORK_DIR/gko3-provider/opbin/service_monitor.sh
 
-chmod +x $WORK_DIR/output/bin/*
-chmod +x $WORK_DIR/output/opbin/*
+chmod +x $WORK_DIR/gko3-provider/bin/*
+chmod +x $WORK_DIR/gko3-provider/opbin/*
 
 TARGET_OUTPUT=$WORK_DIR/target/torrentProvider-all/output/
-cp -r $TARGET_OUTPUT/* $WORK_DIR/output
+cp -r $TARGET_OUTPUT/* $WORK_DIR/gko3-provider
 
 Prompt "Generate verion and timestamp ..."
-echo $(date -d  today +%Y%m%d%H%M%S) > $WORK_DIR/output/version
+echo $(date -d  today +%Y%m%d%H%M%S) > $WORK_DIR/gko3-provider/version
 
-cd $WORK_DIR/output && tar -czf output.tar.gz *
+cd $WORK_DIR/ && tar -czf gko3-provider.tgz gko3-provider
 
 Prompt "Build success ..."
 exit $?

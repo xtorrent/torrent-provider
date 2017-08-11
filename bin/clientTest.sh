@@ -16,7 +16,7 @@ LOGS_DIR=${WORK_DIR}/client_log
 unset _JAVA_OPTIONS
 
 #echo "Setting up environment variable..."
-JAVA_HOME=${WORK_DIR}/java6
+JAVA_HOME=${JAVA_HOME}
 LIB_DIR=${WORK_DIR}/lib
 CONF_DIR=${WORK_DIR}/conf
 
@@ -34,7 +34,7 @@ if [ -f ${LOGS_DIR}/gc.log ];then
     mv ${LOGS_DIR}/gc.log ${LOGS_DIR}/gc.log.${DATE}
 fi
 
-PROGRAM_PARAMS="hdfs://user:password@test.hadoop.com:54310/test/path/to/file localhost 9099 fcaea518a8099df0563c4d11524dd1304f62f178"
+PROGRAM_PARAMS="hdfs://username@test.hadoop.com:54310/test/path/to/file localhost 9099 fcaea518a8099df0563c4d11524dd1304f62f178"
 ${JAVA_HOME}/bin/java ${JAVA_ARGS} ${MAIN_CLASS} ${PROGRAM_PARAMS} >/dev/null 2>&1
 
 if [ $? -eq 0 ]; then
