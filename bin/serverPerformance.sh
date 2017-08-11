@@ -16,7 +16,7 @@ unset _JAVA_OPTIONS
 LOGS_DIR=${WORK_DIR}/client_log
 
 echo "Setting up environment variable..."
-JAVA_HOME=${WORK_DIR}/java6
+JAVA_HOME=${JAVA_HOME}
 LIB_DIR=${WORK_DIR}/lib
 CONF_DIR=${WORK_DIR}/conf
 

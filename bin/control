@@ -102,6 +102,11 @@ stop_server() {
     done
 
     die "stop server"
+
+    for id in $SERVER_PIDS;do
+       kill -9 ${id}
+       echo "force kill process,pid:${id}"
+    done
 }
 
 stop() {

@@ -54,12 +54,17 @@ public class TorrentGenerator implements Runnable {
     private void generate(String uri) {
         LOG.info("start generate uri[" + uri + "]");
         URITorrent torrent = new URITorrent();
+        LOG.debug("set uri for torrent");
         torrent.setUri(uri);
+        LOG.debug("prepare to call torrent.generateTorrentCode()");
         GeneralStatus ret = torrent.generateTorrentCode();
+        LOG.debug("finish call torrent.generateTorrentCode()");
         if (ret == GeneralStatus.STATUS_OK) {
+            LOG.debug("call torrent.generateTorrentCode() with OK");
             torrent.setTorrentStatus(TorrentStatus.STATUS_OK);
             URIStatistics.getInstance().addHdfsProcess(true);
         } else if (ret != GeneralStatus.STATUS_ERROR) {
+            LOG.debug("call torrent.generateTorrentCode() with FILE_NOT_EXIST");
             if (ret == GeneralStatus.STATUS_FILE_NOT_EXIST) {
                 torrent.setTorrentStatus(TorrentStatus.STATUS_ERROR_FILE_NOT_EXIST);
             } else {
@@ -68,6 +73,7 @@ public class TorrentGenerator implements Runnable {
             FailedRetryQueue.getInstance().removeMapKey(uri);
             URIStatistics.getInstance().addHdfsProcess(false);
         } else {
+            LOG.debug("call torrent.generateTorrentCode() with ERROR");
             torrent.setTorrentStatus(TorrentStatus.STATUS_ERROR);
             // put it into failed retry queue
             if (FailedRetryQueue.getInstance().put(uri, FailedRetryInfo.KEY_TYPE_URI)) {

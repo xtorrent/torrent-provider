@@ -72,11 +72,11 @@ public class HdfsConnectionManager {
                 return null;
             }
 
-            String userPassword = uri.substring(0, lastAtPos);
+            String username = uri.substring(0, lastAtPos);
             String host = uri.substring(lastAtPos + 1);
-            LOG.info("userpassword:" + userPassword + ", host:" + host);
+            LOG.info("username:" + username + ", host:" + host);
             Configuration conf = new Configuration();
-            conf.set("hadoop.job.ugi", userPassword);
+            conf.set("hadoop.job.ugi", username);
             conf.set("fs.default.name", host);
             conf.setInt("ipc.ping.interval", 30);
             conf.setInt("ipc.client.connect.timeout", 1000);  // 1s

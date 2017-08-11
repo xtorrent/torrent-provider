@@ -35,8 +35,8 @@ public class HdfsTorrentProcessor implements BaseTorrentProcessor {
 
     private TorrentFile torrent;
 
-    // hdfs username and password
-    private String userPassword;
+    // hdfs username
+    private String username;
     private String hdfsUrl;
     private String hdfsHost;
     private String hdfsPath;
@@ -56,9 +56,11 @@ public class HdfsTorrentProcessor implements BaseTorrentProcessor {
     }
 
     public HdfsTorrentProcessor() {
+        LOG.debug("call HdfsTorrentProcessor constructor");
         this.torrent = new TorrentFile();
         // TODO: should be modified available, default 8M
         setPieceLength(TorrentProviderConfig.defaultPieceSize() * 1024);
+        LOG.debug("finish call HdfsTorrentProcessor constructor");
     }
 
     /**
@@ -68,7 +70,7 @@ public class HdfsTorrentProcessor implements BaseTorrentProcessor {
      * @return HdfsStatus
      */
     public GeneralStatus setBasicConfig(String uri) {
-        // uri format: hdfs://user:password@test.hdfs.com:54310/path/to/dir
+        // uri format: hdfs://user@test.hdfs.com:54310/path/to/dir
         if (!uri.startsWith("hdfs://")) {
             this.errorMessage = "uri[" + uri + "] is invalid!";
             LOG.warn(this.errorMessage);
@@ -82,7 +84,7 @@ public class HdfsTorrentProcessor implements BaseTorrentProcessor {
             return GeneralStatus.STATUS_INVALID_PARAM;
         }
 
-        this.userPassword = uri.substring(0, lastAtPos).replace(':', ',');
+        this.username = uri.substring(0, lastAtPos);
         this.hdfsUrl = "hdfs://" + uri.substring(lastAtPos + 1);
         if (this.hdfsUrl.charAt(this.hdfsUrl.length() - 1) == '/') {
             this.hdfsUrl = this.hdfsUrl.substring(0, this.hdfsUrl.length() - 1);
@@ -101,7 +103,7 @@ public class HdfsTorrentProcessor implements BaseTorrentProcessor {
         int posPortStart = hdfsUrl.lastIndexOf(':');
         int posPortEnd = hdfsUrl.indexOf('/', posPortStart);
         this.hdfsHost = hdfsUrl.substring(0, posPortEnd);
-        this.hdfsPath = hdfsUrl.substring(posPortEnd);
+        this.hdfsPath = hdfsUrl; //.substring(posPortEnd);
         return initHdfsFileSystem();
     }
 
@@ -113,6 +115,7 @@ public class HdfsTorrentProcessor implements BaseTorrentProcessor {
     public GeneralStatus addDirectory() {
         // check if file exists first
         try {
+            LOG.debug("call addDirectory()");
             FileStatus fileStatus = hdfsFileSystem.getFileStatus(new Path(this.hdfsPath));
             if (fileStatus.isDir()) {
                 this.torrent.singleFileNeedSetPath = true;
@@ -139,6 +142,7 @@ public class HdfsTorrentProcessor implements BaseTorrentProcessor {
      */
     private GeneralStatus addDirectory(String hdfsPath, String dirName) {
         try {
+            LOG.debug("call addDirectory(hdfsPath, dirName)");
             FileStatus[] fileList = hdfsFileSystem.listStatus(new Path(hdfsPath));
             for (int i = 0; i < fileList.length; ++i) {
                 if (fileList[i].isDir()) {
@@ -278,12 +282,9 @@ public class HdfsTorrentProcessor implements BaseTorrentProcessor {
 
         // some hadoop info
         info.put("HADOOP_PROTOCOL", "hdfs");
-        String[] userPassword = this.userPassword.split(",");
-        if (userPassword.length == 2) {
-            info.put("HADOOP_USER", userPassword[0]);
-            info.put("HADOOP_PASSWD", userPassword[1]);
-            LOG.debug("HADOOP_USER:" + userPassword[0] + ", HADOOP_PASSWD:" + userPassword[1]);
-        }
+
+        info.put("HADOOP_USER", this.username);
+        LOG.debug("HADOOP_USER: " + this.username);
 
         // hdfsUrl is hdfs://test.hdfs.com:54310/path/to/dir/file
         String hdfsUrl = this.hdfsUrl;
@@ -293,6 +294,7 @@ public class HdfsTorrentProcessor implements BaseTorrentProcessor {
         int pos = hdfsUrl.indexOf('/');
         if (pos != -1) {
             String[] hostPort = hdfsUrl.substring(0, pos).split(":");
+            LOG.debug("raw host:port is " + hdfsUrl.substring(0, pos));
             if (hostPort.length == 2) {
                 info.put("HADOOP_HOST", hostPort[0]);
                 info.put("HADOOP_PORT", Integer.parseInt(hostPort[1]));
@@ -313,6 +315,7 @@ public class HdfsTorrentProcessor implements BaseTorrentProcessor {
 
         map.put("info", info);
         try {
+            LOG.debug("encode map object with BEncoder");
             byte[] data = BEncoder.encode(map);
             return SnappyTool.compress(data);
         } catch (Exception e) {
@@ -391,7 +394,7 @@ public class HdfsTorrentProcessor implements BaseTorrentProcessor {
         }
 
         try {
-            String uri = this.userPassword + "@" + this.hdfsHost;
+            String uri = this.username + "@" + this.hdfsHost;
             hdfsFileSystem = HdfsConnectionManager.getHdfsConnectionManager().getFileSystem(uri);
             if (hdfsFileSystem == null) {
                 this.errorMessage = "hdfsUrl:" + this.hdfsUrl + " is invalid";
